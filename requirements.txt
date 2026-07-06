@@ -1,0 +1,5 @@
+# Must match the Prefect server + all worker venvs (3.7.x clients fail event-stream
+# auth against a 3.6.x server)
+prefect==3.6.6
+python-dotenv
+requests
