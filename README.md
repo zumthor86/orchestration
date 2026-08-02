@@ -1,6 +1,6 @@
 # orchestration
 
-The thin cross-project **conductor** for the daily quant pipeline (feature `003-ingest-core-orchestration`).
+The thin cross-project **conductor** for the daily quant pipeline (feature `003-ingest-core-orchestration`). It owns the workspace's only schedule and sequences the four stage deployments. See [`../ARCHITECTURE.md`](../ARCHITECTURE.md) for the full end-to-end flow and runtime topology.
 
 ## What lives here
 
@@ -36,3 +36,13 @@ python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt
 prefect deploy    # registers daily-quant-pipeline from deployments.yaml / prefect.yaml
 ```
+
+## Changelog
+
+Dated, one-line entries for changes that affect stage owners — stage order changes,
+gating behavior, new notification channels, breaking behavior. Keep entries short;
+`git log` has the detail. Update this **in the same change** that touches this
+project, and mention it in whichever consuming project's `CLAUDE.md` you're also
+updating.
+
+- **2026-07-06** (`cd1bec0`) — Initial conductor: `daily-quant-pipeline` sequencing `hermes-ingest → hephaestus-ingest → hephaestus-surface → hermes-screen`, gated on `Completed`, single failure notification.
