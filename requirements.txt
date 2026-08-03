@@ -1,5 +1,10 @@
 # Must match the Prefect server + all worker venvs (3.7.x clients fail event-stream
 # auth against a 3.6.x server)
 prefect==3.6.6
+# Prefect declares fastapi<1.0.0,>=0.111.0 but its embedded server (PrefectRouter)
+# breaks against fastapi's newer route-matching internals (AttributeError:
+# 'PrefectRouter' object has no attribute 'routes', hit at fastapi 0.139.0 on
+# 2026-07-07); pin to a version known to work with 3.6.6's server.
+fastapi==0.117.1
 python-dotenv
 requests

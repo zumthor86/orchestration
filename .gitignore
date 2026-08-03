@@ -10,3 +10,8 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+
+# Prefect server/worker runtime output when run from this directory — transient,
+# per-machine, not source (one has grown to 8M+ lines from Windows console-capture
+# spam; see ../stack.README.md "Gotchas the log daemon fixes").
+*.log

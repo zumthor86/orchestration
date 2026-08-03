@@ -1,7 +1,16 @@
 # Conductor deployment (feature 003-ingest-core-orchestration).
-# THE ONLY SCHEDULED DEPLOYMENT in the whole pipeline (FR-010) — all four
-# stage deployments (hermes-ingest, hephaestus-ingest, hephaestus-surface,
-# hermes-screen) are trigger-only and are invoked by this flow in order.
+# Trigger-only, like all four stage deployments (hermes-ingest, hephaestus-ingest,
+# hephaestus-surface, hermes-screen) it invokes in order.
+#
+# UNSCHEDULED as of 2026-08-03 (deliberate — was the only Prefect-level cron
+# schedule in the workspace, 02:00 ET nightly). A machine sleep during an
+# overnight run caused a 10-hour stall, and because nothing prevented overlap,
+# the next scheduled run fired the instant the machine woke — two full pipeline
+# runs collided over the same EODHD rate limit and DB. Runs are ad hoc
+# (`prefect deployment run 'daily-quant-pipeline/daily-quant-pipeline'`) until
+# there's a way to guarantee the run environment stays awake and a concurrency
+# limit prevents overlapping runs. Re-adding a schedule later is one `schedules:`
+# block away — see git history for the exact cron entry this replaced.
 name: orchestration
 prefect-version: ">=3.0"
 
@@ -11,14 +20,9 @@ pull:
 
 deployments:
   - name: daily-quant-pipeline
-    description: "Single scheduled entry point: hermes-ingest -> hephaestus-ingest -> hephaestus-surface -> hermes-screen, gated on Completed."
+    description: "Ad hoc entry point: hermes-ingest -> hephaestus-ingest -> hephaestus-surface -> hermes-screen, gated on Completed. Trigger manually — see prefect.yaml header for why this isn't scheduled."
     entrypoint: daily_pipeline.py:daily_pipeline
-    schedules:
-      # 02:00 ET nightly (matches the retired Hephaestus gap-fill-daily cadence:
-      # options EOD data lands late evening; at 02:00 the "latest trading day"
-      # resolves to the just-closed session for every stage). Tune as needed.
-      - cron: "0 2 * * *"
-        timezone: "America/New_York"
+    schedules: []
     parameters: {}
     work_pool:
       name: orchestration-pool
