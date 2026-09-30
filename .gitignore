@@ -15,3 +15,9 @@ Thumbs.db
 # per-machine, not source (one has grown to 8M+ lines from Windows console-capture
 # spam; see ../stack.README.md "Gotchas the log daemon fixes").
 *.log
+
+# Claude Code worktrees (separate checkouts)
+.claude/worktrees/
+
+# Throwaway scripts and investigations (workspace convention)
+temp/
