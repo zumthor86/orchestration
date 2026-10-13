@@ -53,7 +53,7 @@ def _publish_run_summary(target_date, results: list[dict]) -> None:
             table=results,
             description=f"daily-quant-pipeline stage outcomes ({target_date or 'latest session'})",
         )
-    except Exception:  # pragma: no cover — a summary failure must not mask the run outcome
+    except Exception:  # pragma: no cover  # noqa: BLE001, S110 - a summary failure must not mask the run outcome
         pass
 
 

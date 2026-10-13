@@ -68,4 +68,4 @@ def send_notification(
                 resp.status_code, resp.text[:200],
             )
     except Exception as e:  # pragma: no cover
-        logger.error("Notification POST to channel raised: %s — alert text was: %s", e, text)
+        logger.error("Notification POST to channel raised: %s — alert text was: %s", e, text, exc_info=True)
