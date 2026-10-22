@@ -57,6 +57,28 @@ def _publish_run_summary(target_date, results: list[dict]) -> None:
         pass
 
 
+def _stop_the_line(run, name: str, state, results: list[dict], target_date, logger) -> None:
+    """Record the stages that will not run, notify once, and raise. Called for the first stage that did not complete."""
+    # FR-011: stop the line. FR-019/D9: exactly one notification, sent here.
+    state_name = state.name if state is not None else "Unknown"
+    message = (state.message or "") if state is not None else ""
+    trigger = "coverage_below_floor" if COVERAGE_MARKER in message else "stage_failed"
+    summary = f"{name} ended {state_name}: {message or 'no state message'}"
+    logger.error("Pipeline stopped — %s", summary)
+    for skipped in STAGE_ORDER[STAGE_ORDER.index(name) + 1:]:
+        results.append({"stage": skipped, "state": "NotRun (upstream failed)", "run_id": ""})
+    _publish_run_summary(target_date, results)
+    send_notification(
+        run_id=str(run.id),
+        target_date=str(target_date or "latest"),
+        trigger=trigger,
+        failing_stage=name,
+        summary=summary,
+        run_url=_run_ui_url(str(run.id)),
+    )
+    raise RuntimeError(f"daily-quant-pipeline stopped: {summary}")
+
+
 @flow(name="daily-quant-pipeline", retries=0, log_prints=True)
 def daily_pipeline(target_date: Optional[date] = None) -> None:
     """Run the four stages in order; stop the line and notify on first failure."""
@@ -77,23 +99,7 @@ def daily_pipeline(target_date: Optional[date] = None) -> None:
             logger.info("Stage %s Completed.", name)
             continue
 
-        # FR-011: stop the line. FR-019/D9: exactly one notification, sent here.
-        message = (state.message or "") if state is not None else ""
-        trigger = "coverage_below_floor" if COVERAGE_MARKER in message else "stage_failed"
-        summary = f"{name} ended {state_name}: {message or 'no state message'}"
-        logger.error("Pipeline stopped — %s", summary)
-        for skipped in STAGE_ORDER[STAGE_ORDER.index(name) + 1:]:
-            results.append({"stage": skipped, "state": "NotRun (upstream failed)", "run_id": ""})
-        _publish_run_summary(target_date, results)
-        send_notification(
-            run_id=str(run.id),
-            target_date=str(target_date or "latest"),
-            trigger=trigger,
-            failing_stage=name,
-            summary=summary,
-            run_url=_run_ui_url(str(run.id)),
-        )
-        raise RuntimeError(f"daily-quant-pipeline stopped: {summary}")
+        _stop_the_line(run, name, state, results, target_date, logger)
 
     _publish_run_summary(target_date, results)
 
